@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todo List</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #000100;
+            color: white;
+        }
+
+        .task {
+            position: relative;
+            font-size: 20px;
+        }
+
+        .task-actions {
+            position: absolute;
+            right: 0;
+            top: 0;
+            font-size: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1 class="mt-4 text-center">Todo List</h1>
+
+        <!-- Add new task form -->
+        <form method="POST" class="mb-3 d-flex justify-content-center">
+            <input type="text" name="content" placeholder="Enter a task" class="form-control me-2" required>
+            <button type="submit" class="btn btn-primary">Add</button>
+        </form>
+
+        <!-- Task List -->
+        <ul class="list-group">
+            {% for item in items %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                <div class="task-content">
+                    <!-- Display task content as text -->
+                    <span id="task-text-{{ item.id }}" class="{% if item.completed %}text-decoration-line-through{% endif %}">
+                        {{ item.content }}
+                    </span>
+                </div>
+
+                <div class="task-actions">
+                    <!-- Edit Button (visible initially) -->
+                    <button class="btn btn-warning btn-sm" id="edit-btn-{{ item.id }}" onclick="editTask({{ item.id }}, '{{ item.content }}')">Edit</button>
+
+                    <!-- Complete Button -->
+                    {% if not item.completed %}
+                    <a href="{{ url_for('complete', item_id=item.id) }}" class="btn btn-success btn-sm">[✓]</a>
+                    {% endif %}
+
+                    <!-- Delete Button -->
+                    <a href="{{ url_for('delete', item_id=item.id) }}" class="btn btn-danger btn-sm">[✗]</a>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <script>
+        // Function to edit task using a popup
+        function editTask(taskId, currentContent) {
+            var newContent = prompt("Edit your task:", currentContent);
+            if (newContent !== null && newContent !== "") {
+                // Submit the new content to the server
+                var form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '/edit/' + taskId;
+
+                var input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'content';
+                input.value = newContent;
+                form.appendChild(input);
+
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>
