@@ -4,6 +4,7 @@ const noteModal = document.querySelector(".note__modal__body");
 
 // Global store
 let globalStore = [];
+let deletedNotesStack = [];
 
 // Function to create a new card
 const newCard = ({ id, noteTitle, noteCategory, noteDescription }) => `
@@ -29,6 +30,41 @@ const newCard = ({ id, noteTitle, noteCategory, noteDescription }) => `
     </div>
   </div>`;
 
+// Function to delete a card
+const deleteCard = (event) => {
+  const targetID = event.target.id;
+  const cardToDelete = globalStore.find((note) => note.id === targetID);
+
+  if (cardToDelete) {
+    deletedNotesStack.push(cardToDelete);
+    globalStore = globalStore.filter((note) => note.id !== targetID);
+    document.getElementById(targetID).remove();
+    updateLocalStorage();
+  }
+};
+
+// Function to undo delete
+const undoDelete = () => {
+  if (deletedNotesStack.length > 0) {
+    const lastDeletedNote = deletedNotesStack.pop();
+    globalStore.push(lastDeletedNote);
+    noteContainer.insertAdjacentHTML('beforeend', newCard(lastDeletedNote));
+    updateLocalStorage();
+  }
+};
+
+// Event listener for Ctrl+Z
+document.addEventListener('keydown', (event) => {
+  if (event.ctrlKey && event.key === 'z') {
+    undoDelete();
+  }
+});
+
+// Function to update localStorage
+const updateLocalStorage = () => {
+  localStorage.setItem("note", JSON.stringify({ cards: globalStore }));
+};
+
 // Function to load data from localStorage
 const loadData = () => {
   const getInitialData = localStorage.note; // if null, then
@@ -41,11 +77,6 @@ const loadData = () => {
     noteContainer.insertAdjacentHTML("beforeend", createNewNote);
     globalStore.push(noteObject);
   });
-};
-
-// Function to update localStorage
-const updateLocalStorage = () => {
-  localStorage.setItem("note", JSON.stringify({ cards: globalStore }));
 };
 
 // Function to save changes
@@ -64,27 +95,6 @@ const saveChanges = () => {
 
   // Update localStorage
   updateLocalStorage();
-};
-
-// Function to delete a card
-const deleteCard = (event) => {
-  event = window.event;
-  const targetID = event.target.id;
-  const tagname = event.target.tagName; // BUTTON OR I
-
-  globalStore = globalStore.filter((noteObject) => noteObject.id !== targetID);
-
-  updateLocalStorage();
-
-  if (tagname === "BUTTON") {
-    return noteContainer.removeChild(
-      event.target.parentNode.parentNode.parentNode // col-lg-4
-    );
-  }
-//   console.log(noteContainer)
-  return noteContainer.removeChild(
-    event.target.parentNode.parentNode.parentNode.parentNode // col-lg-4
-  );
 };
 
 // Function to edit a card
@@ -182,6 +192,8 @@ const viewmore = (event) => {
   const targetID = event.target.id;
 
   const getNote = globalStore.filter(({ id }) => id === targetID);
-	// console.log(getNote[0]);
   noteModal.innerHTML = htmlModalContent(getNote[0]);
 };
+
+// Load initial data
+window.onload = loadData;
